@@ -61,8 +61,23 @@ private: // メンバ変数
 	/// </summary>
 	Sprite* spriteBG = nullptr;
 	Object3d* object3d = nullptr;
+	Object3d* grass[50] = { nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr };
+
+	XMFLOAT3 objPosition[50];
+
+	float randX = 0;
+	float randZ = 0;
 
 	Sprite* sprite1 = nullptr; 
 	Sprite* sprite2 = nullptr;
+
+	//シーン管理
+	enum class Scene
+	{
+		Square,//最低限61点
+		Grass,//草を生やす1点
+		Clear,//ステージ
+	};
+	Scene scene_ = Scene::Square;
 };
 

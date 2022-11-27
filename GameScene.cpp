@@ -1,5 +1,6 @@
 ﻿#include "GameScene.h"
 #include <cassert>
+#include <time.h>
 
 using namespace DirectX;
 
@@ -13,6 +14,10 @@ GameScene::~GameScene()
 	delete object3d;
 	delete sprite1;
 	delete sprite2;
+	for (int i = 0; i < 50; i++)
+	{
+		delete grass[i];
+	}
 }
 
 void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
@@ -38,54 +43,125 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
 	object3d = Object3d::Create();
 	object3d->Update();
 
+	srand(time(nullptr));
+	//草
+	for (int i = 0; i < 50; i++)
+	{
+		randX = rand() % 41 - 20;
+		randZ = rand() % 41 - 20;
+		objPosition[i] = { randX , 0 ,randZ };
+	}
+	for (int i = 0; i < 50; i++)
+	{
+		grass[i] = Object3d::Create();
+	}
+	for (int i = 0; i < 50; i++)
+	{
+		grass[i]->Update();
+	}
+	for (int i = 0; i < 50; i++)
+	{
+		// 座標の変更を反映
+		grass[i]->SetPosition(objPosition[i]);
+	}
+
 	//前景スプライト生成
 	//テクスチャ2番に読み込み
-	Sprite::LoadTexture(2, L"Resources/texture.png");
+	Sprite::LoadTexture(2, L"Resources/OrangeRan.png");
 
 	//座標{0,0}に、テクスチャ2番のスプライトを生成
 	sprite1 = Sprite::Create(2, { 0,0 });
 	sprite2 = Sprite::Create(2, { 500,500 }, { 1,0,0,1 }, { 0, 0 }, false, true);
-	
+
 }
 
 void GameScene::Update()
 {
-	// オブジェクト移動
-	if (input->PushKey(DIK_UP) || input->PushKey(DIK_DOWN) || input->PushKey(DIK_RIGHT) || input->PushKey(DIK_LEFT))
-	{
-		// 現在の座標を取得
-		XMFLOAT3 position = object3d->GetPosition();
+	//シーン管理
+	switch (scene_) {
+	case GameScene::Scene::Square:
 
-		// 移動後の座標を計算
-		if (input->PushKey(DIK_UP)) { position.y += 1.0f; }
-		else if (input->PushKey(DIK_DOWN)) { position.y -= 1.0f; }
-		if (input->PushKey(DIK_RIGHT)) { position.x += 1.0f; }
-		else if (input->PushKey(DIK_LEFT)) { position.x -= 1.0f; }
+		if (input->TriggerKey(DIK_SPACE)) {
+			scene_ = GameScene::Scene::Grass;
+		}
 
-		// 座標の変更を反映
-		object3d->SetPosition(position);
-	}
+		// オブジェクト移動
+		if (input->PushKey(DIK_UP) || input->PushKey(DIK_DOWN) || input->PushKey(DIK_RIGHT) || input->PushKey(DIK_LEFT))
+		{
+			// 現在の座標を取得
+			XMFLOAT3 position = object3d->GetPosition();
 
-	// カメラ移動
-	if (input->PushKey(DIK_W) || input->PushKey(DIK_S) || input->PushKey(DIK_D) || input->PushKey(DIK_A))
-	{
-		if (input->PushKey(DIK_W)) { Object3d::CameraMoveEyeVector({ 0.0f,+1.0f,0.0f }); }
-		else if (input->PushKey(DIK_S)) { Object3d::CameraMoveEyeVector({ 0.0f,-1.0f,0.0f }); }
-		if (input->PushKey(DIK_D)) { Object3d::CameraMoveEyeVector({ +1.0f,0.0f,0.0f }); }
-		else if (input->PushKey(DIK_A)) { Object3d::CameraMoveEyeVector({ -1.0f,0.0f,0.0f }); }
-	}
+			// 移動後の座標を計算
+			if (input->PushKey(DIK_UP)) { position.y += 1.0f; }
+			else if (input->PushKey(DIK_DOWN)) { position.y -= 1.0f; }
+			if (input->PushKey(DIK_RIGHT)) { position.x += 1.0f; }
+			else if (input->PushKey(DIK_LEFT)) { position.x -= 1.0f; }
 
-	object3d->Update();
+			// 座標の変更を反映
+			object3d->SetPosition(position);
+		}
 
-	//スプライト移動
-	if (input->PushKey(DIK_SPACE))
-	{
-		//現在の座標取得
-		XMFLOAT2 position = sprite1->GetPosition();
-		//移動後の座標を計算
-		position.x += 1.0f;
-		//座標の変更を反映
-		sprite1->SetPosition(position);
+		// カメラ移動
+		if (input->PushKey(DIK_W) || input->PushKey(DIK_S) || input->PushKey(DIK_D) || input->PushKey(DIK_A))
+		{
+			if (input->PushKey(DIK_W)) { Object3d::CameraMoveEyeVector({ 0.0f,+1.0f,0.0f }); }
+			else if (input->PushKey(DIK_S)) { Object3d::CameraMoveEyeVector({ 0.0f,-1.0f,0.0f }); }
+			if (input->PushKey(DIK_D)) { Object3d::CameraMoveEyeVector({ +1.0f,0.0f,0.0f }); }
+			else if (input->PushKey(DIK_A)) { Object3d::CameraMoveEyeVector({ -1.0f,0.0f,0.0f }); }
+		}
+
+		object3d->Update();
+
+		//スプライト移動
+		if (input->PushKey(DIK_SPACE))
+		{
+			//現在の座標取得
+			XMFLOAT2 position = sprite1->GetPosition();
+			//移動後の座標を計算
+			position.x += 1.0f;
+			//座標の変更を反映
+			sprite1->SetPosition(position);
+		}
+		break;
+	case GameScene::Scene::Grass:
+		if (input->TriggerKey(DIK_SPACE)) {
+			scene_ = GameScene::Scene::Square;
+		}
+		// オブジェクト移動
+		if (input->PushKey(DIK_UP) || input->PushKey(DIK_DOWN) || input->PushKey(DIK_RIGHT) || input->PushKey(DIK_LEFT))
+		{
+	
+			for (int i = 0; i < 50; i++)
+			{
+				// 座標の変更を反映
+				grass[i]->SetPosition(objPosition[i]);
+			}
+
+			for (int i = 0; i < 50; i++)
+			{
+				// 移動後の座標を計算
+				if (input->PushKey(DIK_UP)) { objPosition[i].y += 1.0f; }
+				else if (input->PushKey(DIK_DOWN)) { objPosition[i].y -= 1.0f; }
+				if (input->PushKey(DIK_RIGHT)) { objPosition[i].x += 1.0f; }
+				else if (input->PushKey(DIK_LEFT)) { objPosition[i].x -= 1.0f; }
+			}
+
+		}
+
+		// カメラ移動
+		if (input->PushKey(DIK_W) || input->PushKey(DIK_S) || input->PushKey(DIK_D) || input->PushKey(DIK_A))
+		{
+			if (input->PushKey(DIK_W)) { Object3d::CameraMoveEyeVector({ 0.0f,+1.0f,0.0f }); }
+			else if (input->PushKey(DIK_S)) { Object3d::CameraMoveEyeVector({ 0.0f,-1.0f,0.0f }); }
+			if (input->PushKey(DIK_D)) { Object3d::CameraMoveEyeVector({ +1.0f,0.0f,0.0f }); }
+			else if (input->PushKey(DIK_A)) { Object3d::CameraMoveEyeVector({ -1.0f,0.0f,0.0f }); }
+		}
+		for (int i = 0; i < 50; i++)
+		{
+			grass[i]->Update();
+		}
+
+		break;
 	}
 }
 
@@ -111,11 +187,22 @@ void GameScene::Draw()
 #pragma endregion
 
 #pragma region 3Dオブジェクト描画
+
 	// 3Dオブジェクト描画前処理
 	Object3d::PreDraw(cmdList);
-
 	// 3Dオブクジェクトの描画
-	object3d->Draw();
+	switch (scene_) {
+	case GameScene::Scene::Square:
+		object3d->Draw();
+		break;
+	case GameScene::Scene::Grass:
+		for (int i = 0; i < 50; i++)
+		{
+			grass[i]->Draw();
+		}
+		break;
+	}
+
 
 	/// <summary>
 	/// ここに3Dオブジェクトの描画処理を追加できる
@@ -132,7 +219,7 @@ void GameScene::Draw()
 	/// <summary>
 	/// ここに前景スプライトの描画処理を追加できる
 	/// </summary>
-	
+
 	/*sprite1->Draw();
 	sprite2->Draw();*/
 
