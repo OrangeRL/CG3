@@ -12,12 +12,13 @@ GameScene::~GameScene()
 {
 	delete spriteBG;
 	delete object3d;
+	delete pManager;
 	delete sprite1;
 	delete sprite2;
-	for (int i = 0; i < 50; i++)
-	{
-		delete grass[i];
-	}
+	//for (int i = 0; i < 50; i++)
+	//{
+	//	delete grass[i];
+	//}
 }
 
 void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
@@ -42,6 +43,9 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
 	// 3Dオブジェクト生成
 	object3d = Object3d::Create();
 	object3d->Update();
+
+	pManager = ParticleManager::Create();
+	pManager->Update();
 
 	srand(time(nullptr));
 	//草
@@ -104,10 +108,10 @@ void GameScene::Update()
 		// カメラ移動
 		if (input->PushKey(DIK_W) || input->PushKey(DIK_S) || input->PushKey(DIK_D) || input->PushKey(DIK_A))
 		{
-			if (input->PushKey(DIK_W)) { Object3d::CameraMoveEyeVector({ 0.0f,+1.0f,0.0f }); }
-			else if (input->PushKey(DIK_S)) { Object3d::CameraMoveEyeVector({ 0.0f,-1.0f,0.0f }); }
-			if (input->PushKey(DIK_D)) { Object3d::CameraMoveEyeVector({ +1.0f,0.0f,0.0f }); }
-			else if (input->PushKey(DIK_A)) { Object3d::CameraMoveEyeVector({ -1.0f,0.0f,0.0f }); }
+			if (input->PushKey(DIK_W)) { ParticleManager::CameraMoveEyeVector({ 0.0f,+1.0f,0.0f }); }
+			else if (input->PushKey(DIK_S)) { ParticleManager::CameraMoveEyeVector({ 0.0f,-1.0f,0.0f }); }
+			if (input->PushKey(DIK_D)) { ParticleManager::CameraMoveEyeVector({ +1.0f,0.0f,0.0f }); }
+			else if (input->PushKey(DIK_A)) { ParticleManager::CameraMoveEyeVector({ -1.0f,0.0f,0.0f }); }
 		}
 
 		object3d->Update();
@@ -122,10 +126,11 @@ void GameScene::Update()
 			//座標の変更を反映
 			sprite1->SetPosition(position);
 		}
+
 		break;
 	case GameScene::Scene::Grass:
 		if (input->TriggerKey(DIK_SPACE)) {
-			scene_ = GameScene::Scene::Square;
+			scene_ = GameScene::Scene::Particle;
 		}
 		// オブジェクト移動
 		if (input->PushKey(DIK_UP) || input->PushKey(DIK_DOWN) || input->PushKey(DIK_RIGHT) || input->PushKey(DIK_LEFT))
@@ -162,6 +167,56 @@ void GameScene::Update()
 		}
 
 		break;
+	case GameScene::Scene::Particle:
+		if (input->TriggerKey(DIK_SPACE)) {
+			scene_ = GameScene::Scene::Square;
+		}
+
+		// カメラ移動
+		if (input->PushKey(DIK_W) || input->PushKey(DIK_S) || input->PushKey(DIK_D) || input->PushKey(DIK_A))
+		{
+			if (input->PushKey(DIK_W)) { ParticleManager::CameraMoveEyeVector({ 0.0f,+1.0f,0.0f }); }
+			else if (input->PushKey(DIK_S)) { ParticleManager::CameraMoveEyeVector({ 0.0f,-1.0f,0.0f }); }
+			if (input->PushKey(DIK_D)) { ParticleManager::CameraMoveEyeVector({ +1.0f,0.0f,0.0f }); }
+			else if (input->PushKey(DIK_A)) { ParticleManager::CameraMoveEyeVector({ -1.0f,0.0f,0.0f }); }
+		}
+
+		pManager->Update();
+
+		//スプライト移動
+		if (input->PushKey(DIK_SPACE))
+		{
+			//現在の座標取得
+			XMFLOAT2 position = sprite1->GetPosition();
+			//移動後の座標を計算
+			position.x += 1.0f;
+			//座標の変更を反映
+			sprite1->SetPosition(position);
+		}
+
+		for (int i = 0; i < 15; i++) {
+			const float rnd_pos = 50.0f;
+			XMFLOAT3 pos{};
+			pos.x = (float)rand() / RAND_MAX * rnd_pos - rnd_pos / 2.0f - 10.0f;
+			pos.y = (float)rand() / RAND_MAX * rnd_pos - rnd_pos / 2.0f;
+			pos.z = (float)rand() / RAND_MAX * rnd_pos - rnd_pos / 2.0f;
+
+			const float rnd_vel = 0.1f;
+			XMFLOAT3 vel{};
+			vel.x = (float)rand() / RAND_MAX * rnd_vel - rnd_vel / 2.0f;
+			vel.y = (float)rand() / RAND_MAX * rnd_vel - rnd_vel / 2.0f;
+			vel.z = (float)rand() / RAND_MAX * rnd_vel - rnd_vel / 2.0f;
+
+			XMFLOAT3 acc{};
+			const float rnd_acc = 0.001f;
+			acc.y = -(float)rand() / RAND_MAX * rnd_acc;
+
+			pManager->Add(60, pos, vel, acc, 1.0f, 0.0f);
+		}
+
+		pManager->Update();
+		break;
+
 	}
 }
 
@@ -189,6 +244,7 @@ void GameScene::Draw()
 #pragma region 3Dオブジェクト描画
 
 	// 3Dオブジェクト描画前処理
+	ParticleManager::PreDraw(cmdList);
 	Object3d::PreDraw(cmdList);
 	// 3Dオブクジェクトの描画
 	switch (scene_) {
@@ -201,6 +257,9 @@ void GameScene::Draw()
 			grass[i]->Draw();
 		}
 		break;
+	case GameScene::Scene::Particle:
+		pManager->Draw();
+		break;
 	}
 
 
@@ -210,6 +269,30 @@ void GameScene::Draw()
 
 	// 3Dオブジェクト描画後処理
 	Object3d::PostDraw();
+	ParticleManager::PostDraw();
+#pragma endregion
+
+#pragma region パーティクル
+
+	// 3Dオブジェクト描画前処理
+	ParticleManager::PreDraw(cmdList);
+	// 3Dオブクジェクトの描画
+	switch (scene_) {
+	case GameScene::Scene::Square:
+		
+		break;
+	case GameScene::Scene::Grass:
+	
+		break;
+	case GameScene::Scene::Particle:
+		pManager->Draw();
+		break;
+	}
+	/// <summary>
+	/// ここに3Dオブジェクトの描画処理を追加できる
+	/// </summary>
+	// 3Dオブジェクト描画後処理
+	ParticleManager::PostDraw();
 #pragma endregion
 
 #pragma region 前景スプライト描画

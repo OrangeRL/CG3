@@ -5,6 +5,7 @@
 #include "Input.h"
 #include "Sprite.h"
 #include "Object3d.h"
+#include "ParticleManager.h"
 #include "DebugText.h"
 
 /// <summary>
@@ -63,6 +64,7 @@ private: // メンバ変数
 	Object3d* object3d = nullptr;
 	Object3d* grass[50] = { nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr };
 
+	ParticleManager* pManager = nullptr;
 	XMFLOAT3 objPosition[50];
 
 	float randX = 0;
@@ -76,7 +78,7 @@ private: // メンバ変数
 	{
 		Square,//最低限61点
 		Grass,//草を生やす1点
-		Clear,//ステージ
+		Particle,//ステージ
 	};
 	Scene scene_ = Scene::Square;
 };
